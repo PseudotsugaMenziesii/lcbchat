@@ -1,0 +1,3 @@
+output/*
+qdrant_storage/*
+scraped_data/*
