@@ -56,6 +56,11 @@ type WebScraper struct {
 
 // NewWebScraper creates a new web scraper instance
 func NewWebScraper(config ScraperConfig) (*WebScraper, error) {
+	if err := os.MkdirAll(config.OutDir, 0755); err != nil {
+		log.Fatalf("Failed to create output directory: %v", err)
+		return &WebScraper{}, err
+	}
+	
 	ws := &WebScraper{
 		config:  config,
 		visited: make(map[string]bool),

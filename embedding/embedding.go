@@ -58,7 +58,7 @@ type EmbeddingConfig struct {
 func DefaultEmbeddingConfig() EmbeddingConfig {
 	return EmbeddingConfig{
 		Model:          "nomic-embed-text", // Good general-purpose embedding model
-		BatchSize:      5,                  // Process 5 chunks concurrently
+		BatchSize:      5,
 		RetryAttempts:  3,
 		RetryDelay:     2 * time.Second,
 		RequestTimeout: 30 * time.Second,

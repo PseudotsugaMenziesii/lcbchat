@@ -113,8 +113,6 @@ type OllamaGenerationResponse struct {
 // NewRAGSystem creates a new RAG system
 func NewRAGSystem(config RAGConfig) (*RAGSystem, error) {
 	// Initialize embedding client
-	embeddingConfig := embedding.DefaultEmbeddingConfig()
-	embeddingConfig.Model = config.EmbeddingModel
 	embeddingClient := embedding.NewOllamaEmbeddingClient(config.OllamaURL, config.EmbeddingModel)
 
 	// Initialize vector database
