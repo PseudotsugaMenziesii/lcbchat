@@ -5,8 +5,11 @@ go 1.24.4
 require (
 	github.com/gocolly/colly/v2 v2.2.0
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/mux v1.8.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728
 	github.com/qdrant/go-client v1.15.2
+	github.com/rs/cors v1.11.1
 	github.com/temoto/robotstxt v1.1.2
 	google.golang.org/grpc v1.74.2
 )

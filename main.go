@@ -12,6 +12,8 @@ import (
 	"lcbchat/embedding"
 	"lcbchat/rag"
 	"lcbchat/scraper"
+	"lcbchat/server"
+	"lcbchat/config"
 	"lcbchat/vectordb"
 	"log"
 	"log/slog"
@@ -33,23 +35,23 @@ const (
 )
 
 // Config holds all configuration for the application
-type Config struct {
-	RAGConfig      rag.RAGConfig
-	OutputDir      string
-	ScraperConfig  scraper.ScraperConfig
-	ChunkingConfig chunking.ChunkingConfig
-	EmbeddingConfig embedding.EmbeddingConfig
-}
+// type Config struct {
+// 	RAGConfig      rag.RAGConfig
+// 	OutputDir      string
+// 	ScraperConfig  scraper.ScraperConfig
+// 	ChunkingConfig chunking.ChunkingConfig
+// 	EmbeddingConfig embedding.EmbeddingConfig
+// }
 
 func main() {
 	// Define command line flags
 	var (
-		command = flag.String("cmd", "interactive", "Command to run: scrape, query, interactive")
+		command = flag.String("cmd", "interactive", "Command to run: scrape, query, interactive, web")
 		query   = flag.String("query", "", "Query to ask (for single query mode)")
-		//url     = flag.String("url", "", "URL to scrape")
 		verbose = flag.Bool("verbose", false, "Enable verbose logging")
 		topK    = flag.Int("topk", 5, "Number of results to retrieve")
 		model   = flag.String("model", "llama3.1:8b", "Generation model to use")
+		port    = flag.String("port", "8080", "Port for web server")
 		help    = flag.Bool("help", false, "Show help")
 	)
 	flag.Parse()
@@ -90,6 +92,8 @@ func main() {
 		runSingleQuery(*query, config)
 	case "interactive":
 		runInteractiveMode(config)
+	case "web":
+		runWebServer(config, *port)
 	default:
 		fmt.Printf("%sError: Unknown command '%s'%s\n", ColorRed, *command, ColorReset)
 		showHelp()
@@ -105,22 +109,40 @@ func showHelp() {
 	fmt.Printf("%sCommands:%s\n", ColorBold, ColorReset)
 	fmt.Println("  scrape       - Scrape a website and process into vector database")
 	fmt.Println("  query        - Ask a single question")
-	fmt.Println("  interactive  - Start interactive chat mode (default)")
+	fmt.Println("  interactive  - Start interactive chat mode")
+	fmt.Println("  web          - Start web server with beautiful UI")
 	
 	fmt.Printf("\n%sOptions:%s\n", ColorBold, ColorReset)
-	fmt.Println("  --url        URL to scrape")
 	fmt.Println("  --query      Question to ask")
 	fmt.Println("  --topk       Number of results to retrieve (default: 5)")
 	fmt.Println("  --model      Generation model to use (default: llama3.1:8b)")
+	fmt.Println("  --port       Port for web server (default: 8080)")
 	fmt.Println("  --verbose    Enable verbose logging")
 	fmt.Println("  --help       Show this help")
 	
 	fmt.Printf("\n%sExamples:%s\n", ColorBold, ColorReset)
+	fmt.Printf("  %s./program --cmd=web --port=3000%s\n", ColorGreen, ColorReset)
 	fmt.Printf("  %s./program --cmd=interactive%s\n", ColorGreen, ColorReset)
 	fmt.Printf("  %s./program --cmd=query --query=\"How do I reset my password?\"%s\n", ColorGreen, ColorReset)
 }
 
-func runSingleQuery(query string, config Config) {
+func runWebServer(config config.Config, port string) {
+	fmt.Printf("%s%s🌐 Starting Web Server%s%s\n", ColorBold, ColorGreen, ColorReset, ColorReset)
+	fmt.Printf("%sWeb interface will be available at: %shttp://localhost:%s%s\n", 
+		ColorCyan, ColorBlue, port, ColorReset)
+	fmt.Printf("%sAPI endpoints available at: %shttp://localhost:%s/api/%s\n\n", 
+		ColorCyan, ColorBlue, port, ColorReset)
+	
+	fmt.Printf("%sNote:%s Make sure you have the web interface files in the 'static' directory\n", 
+		ColorYellow, ColorReset)
+	fmt.Printf("%sPress Ctrl+C to stop the server%s\n\n", ColorYellow, ColorReset)
+	
+	if err := server.StartServer(config, port); err != nil {
+		log.Fatalf("Web server failed: %v", err)
+	}
+}
+
+func runSingleQuery(query string, config config.Config) {
 	fmt.Printf("%s🤖 Initializing RAG system...%s\n", ColorBlue, ColorReset)
 	
 	ragSystem, err := rag.NewRAGSystem(config.RAGConfig)
@@ -140,7 +162,7 @@ func runSingleQuery(query string, config Config) {
 	printQueryResult(result)
 }
 
-func runInteractiveMode(config Config) {
+func runInteractiveMode(config config.Config) {
 	fmt.Printf("%s%s🚀 Starting Interactive RAG Chat%s%s\n", ColorBold, ColorGreen, ColorReset, ColorReset)
 	fmt.Printf("%sInitializing system...%s\n", ColorYellow, ColorReset)
 	
@@ -204,7 +226,7 @@ func printInteractiveHelp() {
 	fmt.Println()
 }
 
-func handleSpecialCommand(input string, ragSystem *rag.RAGSystem, config *Config) bool {
+func handleSpecialCommand(input string, ragSystem *rag.RAGSystem, config *config.Config) bool {
 	switch {
 	case input == "/quit" || input == "/exit":
 		fmt.Printf("%s👋 Goodbye!%s\n", ColorGreen, ColorReset)
@@ -308,7 +330,7 @@ func printSimilarChunks(results []vectordb.SearchResult) {
 	}
 }
 
-func printSystemStats(config *Config) {
+func printSystemStats(config *config.Config) {
 	fmt.Printf("\n%s📊 System Statistics:%s\n", ColorPurple, ColorReset)
 	fmt.Printf("Generation Model: %s%s%s\n", ColorCyan, config.RAGConfig.GenerationModel, ColorReset)
 	fmt.Printf("Embedding Model:  %s%s%s\n", ColorCyan, config.RAGConfig.EmbeddingModel, ColorReset)
@@ -318,7 +340,7 @@ func printSystemStats(config *Config) {
 	fmt.Printf("Temperature:     %s%.2f%s\n", ColorCyan, config.RAGConfig.Temperature, ColorReset)
 }
 
-func printCurrentConfig(config *Config) {
+func printCurrentConfig(config *config.Config) {
 	fmt.Printf("\n%s⚙️  Current Configuration:%s\n", ColorPurple, ColorReset)
 	fmt.Printf("Ollama URL:       %s\n", config.RAGConfig.OllamaURL)
 	fmt.Printf("Generation Model: %s\n", config.RAGConfig.GenerationModel)
@@ -372,7 +394,7 @@ func truncateText(text string, maxLen int) string {
 	return truncated + "..."
 }
 
-func runScrapeAndIndex(config Config) {
+func runScrapeAndIndex(config config.Config) {
 	fmt.Printf("%s🚀 Running full pipeline for: %s%s\n", ColorBlue, config.ScraperConfig.DomainPrefix, ColorReset)
 
 	// SCRAPE
@@ -433,7 +455,7 @@ func runScrapeAndIndex(config Config) {
 	fmt.Printf("%s👍 Scraping and database work is completed! You may now procedd with asking questions.%s", ColorCyan, ColorReset)
 }
 
-func initConfigs() (Config, error) {
+func initConfigs() (config.Config, error) {
 	// Initialize default configurations
 	
 	// Initialize the scraper configuration
@@ -449,7 +471,7 @@ func initConfigs() (Config, error) {
 		EnableDebug:     true, // Enable debug
 	}
 
-	config := Config{
+	config := config.Config{
 		RAGConfig: rag.DefaultRAGConfig(),
 		OutputDir: "./output",
 		ScraperConfig: scrapeConfig,

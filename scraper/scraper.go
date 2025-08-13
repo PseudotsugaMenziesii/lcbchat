@@ -54,6 +54,21 @@ type WebScraper struct {
 	workPool     chan struct{}
 }
 
+// DefaultScraperConfig returns a default scraper configuration
+func DefaultScraperConfig() ScraperConfig {
+	return ScraperConfig{
+		StartURL:       "https://example.com",
+		DomainPrefix:   "https://example.com",
+		MaxDepth:       3,
+		MaxConcurrency: 5,
+		DelayBetween:   2 * time.Second,
+		RespectRobots:  true,
+		UserAgent:      "Go-WebScraper/1.0",
+		OutDir:      "./scraped_data",
+		EnableDebug:    false,
+	}
+}
+
 // NewWebScraper creates a new web scraper instance
 func NewWebScraper(config ScraperConfig) (*WebScraper, error) {
 	if err := os.MkdirAll(config.OutDir, 0755); err != nil {

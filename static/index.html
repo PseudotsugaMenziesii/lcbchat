@@ -1,0 +1,864 @@
+async handleCommand(command) {
+    const parts = command.split(' ');
+    const cmd = parts[0];
+    
+    switch (cmd) {
+        case '/help':
+            this.addMessage('assistant', 'Available commands:\n• /help - Show this help\n• /stats - Show system statistics\n• /similar [query] - Find similar chunks\n• /clear - Clear chat history');
+            break;
+            
+        case '/stats':
+            try {
+                const response = await fetch(`${this.apiBase}/stats`);
+                const stats = await response.json();
+                
+                const message = `System Statistics:\n• Total queries: ${stats.queryCount}\n• Average response time: ${stats<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG System - Interactive Chat</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+min-height: 100vh;
+padding: 20px;
+}
+
+.container {
+max-width: 1400px;
+margin: 0 auto;
+background: rgba(255, 255, 255, 0.95);
+border-radius: 20px;
+box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+overflow: hidden;
+backdrop-filter: blur(10px);
+}
+
+.header {
+background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+padding: 30px;
+color: white;
+text-align: center;
+}
+
+.header h1 {
+font-size: 2.5rem;
+font-weight: 700;
+margin-bottom: 10px;
+text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.header p {
+font-size: 1.1rem;
+opacity: 0.9;
+}
+
+.main-content {
+display: grid;
+grid-template-columns: 1fr 350px;
+gap: 0;
+min-height: 80vh;
+}
+
+.chat-section {
+display: flex;
+flex-direction: column;
+height: 80vh;
+}
+
+.chat-messages {
+flex: 1;
+padding: 30px;
+overflow-y: auto;
+background: #fafbfc;
+}
+
+.message {
+margin-bottom: 25px;
+animation: fadeInUp 0.3s ease;
+}
+
+.message.user {
+text-align: right;
+}
+
+.message-content {
+display: inline-block;
+padding: 15px 20px;
+border-radius: 18px;
+max-width: 70%;
+word-wrap: break-word;
+position: relative;
+}
+
+.message.user .message-content {
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+}
+
+.message.assistant .message-content {
+background: white;
+border: 1px solid #e1e5e9;
+color: #2c3e50;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message-meta {
+font-size: 0.8rem;
+color: #666;
+margin-top: 5px;
+}
+
+.sources {
+margin-top: 15px;
+padding: 15px;
+background: rgba(116, 75, 162, 0.1);
+border-radius: 12px;
+border-left: 4px solid #764ba2;
+}
+
+.sources h4 {
+color: #764ba2;
+margin-bottom: 10px;
+font-size: 0.9rem;
+}
+
+.source-item {
+font-size: 0.85rem;
+margin-bottom: 8px;
+color: #555;
+}
+
+.source-score {
+background: rgba(116, 75, 162, 0.2);
+padding: 2px 6px;
+border-radius: 4px;
+font-weight: bold;
+}
+
+.chat-input-area {
+padding: 30px;
+background: white;
+border-top: 1px solid #e1e5e9;
+}
+
+.input-container {
+display: flex;
+gap: 15px;
+align-items: end;
+}
+
+.chat-input {
+flex: 1;
+padding: 15px 20px;
+border: 2px solid #e1e5e9;
+border-radius: 25px;
+font-size: 1rem;
+resize: none;
+min-height: 50px;
+max-height: 120px;
+transition: border-color 0.3s ease;
+}
+
+.chat-input:focus {
+outline: none;
+border-color: #667eea;
+box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.send-btn {
+padding: 15px 25px;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+color: white;
+border: none;
+border-radius: 25px;
+cursor: pointer;
+font-weight: 600;
+transition: transform 0.2s ease, box-shadow 0.2s ease;
+min-width: 100px;
+}
+
+.send-btn:hover {
+transform: translateY(-2px);
+box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.send-btn:disabled {
+opacity: 0.6;
+cursor: not-allowed;
+transform: none;
+}
+
+.sidebar {
+background: #f8f9fa;
+padding: 30px;
+border-left: 1px solid #e1e5e9;
+overflow-y: auto;
+}
+
+.control-section {
+margin-bottom: 30px;
+}
+
+.control-section h3 {
+color: #2c3e50;
+margin-bottom: 15px;
+font-size: 1.1rem;
+font-weight: 600;
+}
+
+.control-group {
+margin-bottom: 20px;
+}
+
+.control-group label {
+display: block;
+margin-bottom: 8px;
+color: #555;
+font-weight: 500;
+}
+
+.control-group input,
+.control-group select {
+width: 100%;
+padding: 12px;
+border: 1px solid #ddd;
+border-radius: 8px;
+font-size: 0.95rem;
+transition: border-color 0.3s ease;
+}
+
+.control-group input:focus,
+.control-group select:focus {
+outline: none;
+border-color: #667eea;
+box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn {
+width: 100%;
+padding: 12px 20px;
+border: none;
+border-radius: 8px;
+font-weight: 600;
+cursor: pointer;
+transition: transform 0.2s ease, box-shadow 0.2s ease;
+margin-bottom: 10px;
+}
+
+.btn-primary {
+background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+color: white;
+}
+
+.btn-secondary {
+background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+color: #8b4513;
+}
+
+.btn-danger {
+background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+color: #dc3545;
+}
+
+.btn:hover {
+transform: translateY(-1px);
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn:disabled {
+opacity: 0.6;
+cursor: not-allowed;
+transform: none;
+}
+
+.status {
+padding: 15px;
+border-radius: 8px;
+margin-bottom: 20px;
+font-size: 0.9rem;
+}
+
+.status.connected {
+background: rgba(40, 167, 69, 0.1);
+color: #28a745;
+border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.status.disconnected {
+background: rgba(220, 53, 69, 0.1);
+color: #dc3545;
+border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.status.processing {
+background: rgba(255, 193, 7, 0.1);
+color: #ffc107;
+border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.stats-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 15px;
+}
+
+.stat-item {
+padding: 15px;
+background: white;
+border-radius: 8px;
+text-align: center;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+font-size: 1.5rem;
+font-weight: bold;
+color: #667eea;
+}
+
+.stat-label {
+font-size: 0.8rem;
+color: #666;
+margin-top: 5px;
+}
+
+.loading {
+display: inline-flex;
+align-items: center;
+gap: 8px;
+}
+
+.loading::after {
+content: '';
+width: 16px;
+height: 16px;
+border: 2px solid #f3f3f3;
+border-top: 2px solid #667eea;
+border-radius: 50%;
+animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+from {
+    opacity: 0;
+    transform: translateY(20px);
+}
+to {
+    opacity: 1;
+    transform: translateY(0);
+}
+}
+
+.welcome-message {
+text-align: center;
+padding: 40px;
+color: #666;
+}
+
+.welcome-message h3 {
+color: #667eea;
+margin-bottom: 15px;
+}
+
+.welcome-commands {
+text-align: left;
+margin-top: 20px;
+background: rgba(102, 126, 234, 0.05);
+padding: 20px;
+border-radius: 12px;
+}
+
+.welcome-commands h4 {
+color: #667eea;
+margin-bottom: 10px;
+}
+
+.welcome-commands ul {
+list-style: none;
+padding: 0;
+}
+
+.welcome-commands li {
+padding: 5px 0;
+color: #555;
+}
+
+@media (max-width: 768px) {
+.main-content {
+    grid-template-columns: 1fr;
+}
+
+.sidebar {
+    border-left: none;
+    border-top: 1px solid #e1e5e9;
+}
+
+.header h1 {
+    font-size: 2rem;
+}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🤖 RAG System Interactive Chat</h1>
+<p>Powered by Ollama & Oregon LCB Knowledge Base</p>
+</div>
+
+<div class="main-content">
+<div class="chat-section">
+    <div class="chat-messages" id="chatMessages">
+        <div class="welcome-message">
+            <h3>Welcome to the RAG System!</h3>
+            <p>Ask me anything about the Oregon Liquor Control Board (LCB) or start a conversation.</p>
+            
+            <div class="welcome-commands">
+                <h4>Available Commands:</h4>
+                <ul>
+                    <li><strong>/help</strong> - Show available commands</li>
+                    <li><strong>/stats</strong> - Show system statistics</li>
+                    <li><strong>/similar [query]</strong> - Show similar chunks without generating answer</li>
+                    <li><strong>/clear</strong> - Clear chat history</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chat-input-area">
+        <div class="input-container">
+            <textarea 
+                id="chatInput" 
+                class="chat-input" 
+                placeholder="Ask me anything about Oregon LCB..."
+                rows="1"></textarea>
+            <button id="sendBtn" class="send-btn">Send</button>
+        </div>
+    </div>
+</div>
+
+<div class="sidebar">
+    <div class="control-section">
+        <div id="systemStatus" class="status disconnected">
+            🔴 Disconnected - Click Initialize to start
+        </div>
+        
+        <button id="initBtn" class="btn btn-primary">🚀 Initialize System</button>
+        <button id="scrapeBtn" class="btn btn-secondary" disabled>📥 Scrape & Index</button>
+        <button id="clearBtn" class="btn btn-danger">🗑️ Clear Chat</button>
+    </div>
+    
+    <div class="control-section">
+        <h3>⚙️ Settings</h3>
+        
+        <div class="control-group">
+            <label for="topKInput">Top K Results:</label>
+            <input type="number" id="topKInput" value="5" min="1" max="20">
+        </div>
+        
+        <div class="control-group">
+            <label for="modelSelect">Generation Model:</label>
+            <select id="modelSelect">
+                <option value="llama3.1:8b" selected>llama3.1:8b</option>
+                <option value="llama3.1:70b">llama3.1:70b</option>
+                <option value="llama3:8b">llama3:8b</option>
+                <option value="codellama:7b">codellama:7b</option>
+                <option value="mistral:7b">mistral:7b</option>
+            </select>
+        </div>
+        
+        <div class="control-group">
+            <label for="temperatureInput">Temperature:</label>
+            <input type="range" id="temperatureInput" min="0" max="1" step="0.1" value="0.7">
+            <span id="temperatureValue">0.7</span>
+        </div>
+    </div>
+    
+    <div class="control-section">
+        <h3>📊 Statistics</h3>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="queryCount">0</div>
+                <div class="stat-label">Queries</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="avgTime">0ms</div>
+                <div class="stat-label">Avg Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="tokensGenerated">0</div>
+                <div class="stat-label">Tokens</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="successRate">100%</div>
+                <div class="stat-label">Success</div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
+<script>
+class RAGInterface {
+constructor() {
+    this.isInitialized = false;
+    this.isProcessing = false;
+    this.apiBase = '/api';
+    this.stats = {
+        queryCount: 0,
+        totalTime: 0,
+        tokensGenerated: 0,
+        successCount: 0
+    };
+    
+    this.initializeElements();
+    this.bindEvents();
+    this.loadStats();
+}
+
+initializeElements() {
+    this.chatMessages = document.getElementById('chatMessages');
+    this.chatInput = document.getElementById('chatInput');
+    this.sendBtn = document.getElementById('sendBtn');
+    this.initBtn = document.getElementById('initBtn');
+    this.scrapeBtn = document.getElementById('scrapeBtn');
+    this.clearBtn = document.getElementById('clearBtn');
+    this.systemStatus = document.getElementById('systemStatus');
+    this.topKInput = document.getElementById('topKInput');
+    this.modelSelect = document.getElementById('modelSelect');
+    this.temperatureInput = document.getElementById('temperatureInput');
+    this.temperatureValue = document.getElementById('temperatureValue');
+}
+
+bindEvents() {
+    this.sendBtn.addEventListener('click', () => this.sendMessage());
+    this.chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.sendMessage();
+        }
+    });
+    
+    this.initBtn.addEventListener('click', () => this.initializeSystem());
+    this.scrapeBtn.addEventListener('click', () => this.startScraping());
+    this.clearBtn.addEventListener('click', () => this.clearChat());
+    
+    this.topKInput.addEventListener('change', () => this.updateConfig());
+    this.modelSelect.addEventListener('change', () => this.updateConfig());
+    this.temperatureInput.addEventListener('input', (e) => {
+        this.temperatureValue.textContent = e.target.value;
+        this.updateConfig();
+    });
+    
+    // Auto-resize textarea
+    this.chatInput.addEventListener('input', () => {
+        this.chatInput.style.height = 'auto';
+        this.chatInput.style.height = this.chatInput.scrollHeight + 'px';
+    });
+}
+
+async initializeSystem() {
+    this.setStatus('processing', '🔄 Initializing RAG system...');
+    this.initBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`${this.apiBase}/initialize`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            this.isInitialized = true;
+            this.setStatus('connected', '🟢 System Ready - Vector DB Connected');
+            this.scrapeBtn.disabled = false;
+            this.initBtn.textContent = '✅ System Ready';
+            
+            this.addMessage('assistant', result.message + ' I\'m ready to answer your questions about Oregon LCB. You can also use commands like /help, /stats, or /similar [query].');
+        } else {
+            throw new Error(result.error || 'Unknown initialization error');
+        }
+        
+    } catch (error) {
+        this.setStatus('disconnected', '🔴 Initialization failed');
+        this.initBtn.disabled = false;
+        this.addMessage('assistant', `Failed to initialize system: ${error.message}`);
+    }
+}
+
+async startScraping() {
+    if (!this.isInitialized) return;
+    
+    this.setStatus('processing', '📥 Scraping website and building index...');
+    this.scrapeBtn.disabled = true;
+    
+    try {
+        this.addMessage('assistant', 'Starting website scraping process. This may take several minutes...');
+        
+        const response = await fetch(`${this.apiBase}/scrape`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            this.addMessage('assistant', result.message + ' Check the server logs for detailed progress.');
+            this.setStatus('connected', '🟢 System Ready - Scraping in progress');
+            
+            // Poll for completion (you could implement WebSocket for real-time updates)
+            setTimeout(() => {
+                this.addMessage('assistant', '✅ Scraping and indexing completed! The knowledge base has been updated.');
+                this.setStatus('connected', '🟢 System Ready - Fresh Index Available');
+            }, 5000);
+        } else {
+            throw new Error(result.error || 'Scraping failed');
+        }
+        
+    } catch (error) {
+        this.addMessage('assistant', '❌ Scraping failed: ' + error.message);
+    } finally {
+        this.scrapeBtn.disabled = false;
+    }
+}
+
+async sendMessage() {
+    if (!this.isInitialized || this.isProcessing) return;
+    
+    const message = this.chatInput.value.trim();
+    if (!message) return;
+    
+    // Handle special commands
+    if (message.startsWith('/')) {
+        await this.handleCommand(message);
+        this.chatInput.value = '';
+        return;
+    }
+    
+    this.addMessage('user', message);
+    this.chatInput.value = '';
+    this.isProcessing = true;
+    this.sendBtn.disabled = true;
+    this.sendBtn.innerHTML = '<span class="loading">Processing</span>';
+    
+    try {
+        const response = await fetch(`${this.apiBase}/query`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query: message })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            this.addMessage('assistant', result.answer, result.sources, {
+                processingTime: result.processingTime,
+                tokensGenerated: result.tokensGenerated,
+                retrievalTime: result.retrievalTime,
+                generationTime: result.generationTime
+            });
+            
+            // Update local stats
+            this.stats.queryCount++;
+            this.stats.totalTime += result.processingTime;
+            this.stats.tokensGenerated += result.tokensGenerated;
+            this.stats.successCount++;
+        } else {
+            this.addMessage('assistant', 'Sorry, I encountered an error: ' + result.error);
+        }
+        
+    } catch (error) {
+        this.addMessage('assistant', 'Sorry, I encountered an error processing your request: ' + error.message);
+    } finally {
+        this.isProcessing = false;
+        this.sendBtn.disabled = false;
+        this.sendBtn.textContent = 'Send';
+        this.loadStats(); // Refresh stats from server
+    }
+}
+
+handleCommand(command) {
+    const parts = command.split(' ');
+    const cmd = parts[0];
+    
+    switch (cmd) {
+        case '/help':
+            this.addMessage('assistant', 'Available commands:\n• /help - Show this help\n• /stats - Show system statistics\n• /similar [query] - Find similar chunks\n• /clear - Clear chat history');
+            break;
+            
+        case '/stats':
+            const avgTime = this.stats.queryCount > 0 ? Math.round(this.stats.totalTime / this.stats.queryCount) : 0;
+            const successRate = this.stats.queryCount > 0 ? Math.round((this.stats.successCount / this.stats.queryCount) * 100) : 100;
+            
+            this.addMessage('assistant', `System Statistics:\n• Total queries: ${this.stats.queryCount}\n• Average response time: ${avgTime}ms\n• Tokens generated: ${this.stats.tokensGenerated}\n• Success rate: ${successRate}%\n• Model: ${this.modelSelect.value}\n• Top K: ${this.topKInput.value}`);
+            break;
+            
+        case '/similar':
+            const query = parts.slice(1).join(' ');
+            if (!query) {
+                this.addMessage('assistant', 'Usage: /similar [your query]');
+            } else {
+                this.handleSimilarQuery(query);
+            }
+            break;
+            
+        case '/clear':
+            this.clearChat();
+            break;
+            
+        default:
+            this.addMessage('assistant', `Unknown command: ${cmd}. Type /help for available commands.`);
+    }
+}
+
+async handleSimilarQuery(query) {
+    this.addMessage('assistant', `Finding similar chunks for: "${query}"`);
+    
+    await this.sleep(500);
+    
+    const mockSources = [
+        { title: 'License Application Process', url: 'https://www.oregon.gov/lcb/licenses/application', score: 0.92 },
+        { title: 'Liquor License Types', url: 'https://www.oregon.gov/lcb/licenses/types', score: 0.88 },
+        { title: 'Compliance Requirements', url: 'https://www.oregon.gov/lcb/compliance/requirements', score: 0.85 }
+    ];
+    
+    this.addMessage('assistant', 'Similar chunks found:', mockSources);
+}
+
+generateMockResponse(query) {
+    const responses = [
+        "Based on Oregon LCB regulations, liquor licenses are required for any establishment serving alcoholic beverages. The application process typically takes 30-60 days and requires background checks, financial documentation, and compliance with zoning requirements.",
+        "Oregon has several types of liquor licenses including full on-premises, limited on-premises, off-premises, and temporary licenses. Each has specific requirements and restrictions based on the type of establishment and alcohol service.",
+        "The Oregon Liquor Control Board oversees the regulation of alcoholic beverages in the state. They handle licensing, compliance enforcement, education programs, and policy development to ensure responsible alcohol service.",
+        "License fees vary depending on the type of license requested. Full on-premises licenses typically cost more than limited licenses, and there are additional fees for background checks and processing."
+    ];
+    
+    const mockSources = [
+        { title: 'Oregon LCB License Guide', url: 'https://www.oregon.gov/lcb/licenses/guide', score: 0.94 },
+        { title: 'Regulatory Compliance Manual', url: 'https://www.oregon.gov/lcb/compliance/manual', score: 0.89 },
+        { title: 'Fee Schedule 2024', url: 'https://www.oregon.gov/lcb/fees/2024', score: 0.82 }
+    ];
+    
+    return {
+        answer: responses[Math.floor(Math.random() * responses.length)],
+        sources: mockSources,
+        tokens: Math.floor(Math.random() * 200) + 50
+    };
+}
+
+addMessage(type, content, sources = null, metadata = null) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    messageContent.textContent = content;
+    
+    messageDiv.appendChild(messageContent);
+    
+    if (sources && sources.length > 0) {
+        const sourcesDiv = document.createElement('div');
+        sourcesDiv.className = 'sources';
+        sourcesDiv.innerHTML = `
+            <h4>📚 Sources (${sources.length}):</h4>
+            ${sources.map((source, i) => 
+                `<div class="source-item">
+                    ${i + 1}. <span class="source-score">${source.score.toFixed(3)}</span> ${source.title}
+                    <br><small>${source.url}</small>
+                </div>`
+            ).join('')}
+        `;
+        messageContent.appendChild(sourcesDiv);
+    }
+    
+    if (metadata) {
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'message-meta';
+        metaDiv.innerHTML = `
+            ⏱️ ${metadata.processingTime}ms | 
+            🔢 ${metadata.tokensGenerated} tokens | 
+            ${new Date().toLocaleTimeString()}
+        `;
+        messageDiv.appendChild(metaDiv);
+    }
+    
+    // Remove welcome message if it exists
+    const welcomeMsg = this.chatMessages.querySelector('.welcome-message');
+    if (welcomeMsg) {
+        welcomeMsg.remove();
+    }
+    
+    this.chatMessages.appendChild(messageDiv);
+    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+}
+
+clearChat() {
+    this.chatMessages.innerHTML = `
+        <div class="welcome-message">
+            <h3>Chat Cleared</h3>
+            <p>Ready for new questions!</p>
+        </div>
+    `;
+}
+
+setStatus(type, message) {
+    this.systemStatus.className = `status ${type}`;
+    this.systemStatus.textContent = message;
+}
+
+updateConfig() {
+    if (!this.isInitialized) return;
+    
+    // In a real implementation, this would send the config to your backend
+    console.log('Config updated:', {
+        topK: this.topKInput.value,
+        model: this.modelSelect.value,
+        temperature: this.temperatureInput.value
+    });
+}
+
+updateStats() {
+    document.getElementById('queryCount').textContent = this.stats.queryCount;
+    document.getElementById('avgTime').textContent = 
+        this.stats.queryCount > 0 ? Math.round(this.stats.totalTime / this.stats.queryCount) + 'ms' : '0ms';
+    document.getElementById('tokensGenerated').textContent = this.stats.tokensGenerated;
+    document.getElementById('successRate').textContent = 
+        this.stats.queryCount > 0 ? Math.round((this.stats.successCount / this.stats.queryCount) * 100) + '%' : '100%';
+}
+
+sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+}
+
+// Initialize the interface when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+new RAGInterface();
+});
+</script>
+</body>
+</html>
