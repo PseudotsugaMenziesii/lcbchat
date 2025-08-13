@@ -1,18 +1,3 @@
-async handleCommand(command) {
-    const parts = command.split(' ');
-    const cmd = parts[0];
-    
-    switch (cmd) {
-        case '/help':
-            this.addMessage('assistant', 'Available commands:\n• /help - Show this help\n• /stats - Show system statistics\n• /similar [query] - Find similar chunks\n• /clear - Clear chat history');
-            break;
-            
-        case '/stats':
-            try {
-                const response = await fetch(`${this.apiBase}/stats`);
-                const stats = await response.json();
-                
-                const message = `System Statistics:\n• Total queries: ${stats.queryCount}\n• Average response time: ${stats<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -425,7 +410,7 @@ color: #555;
     <div class="chat-messages" id="chatMessages">
         <div class="welcome-message">
             <h3>Welcome to the RAG System!</h3>
-            <p>Ask me anything about the Oregon Liquor Control Board (LCB) or start a conversation.</p>
+            <p>Ask me anything about the Oregon Landscape Contractors Board (LCB) or start a conversation.</p>
             
             <div class="welcome-commands">
                 <h4>Available Commands:</h4>
