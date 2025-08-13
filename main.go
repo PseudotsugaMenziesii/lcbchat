@@ -14,6 +14,7 @@ import (
 	"lcbchat/scraper"
 	"lcbchat/vectordb"
 	"log"
+	"log/slog"
 
 	"time"
 	"flag"
@@ -46,7 +47,7 @@ func main() {
 		command = flag.String("cmd", "interactive", "Command to run: scrape, query, interactive")
 		query   = flag.String("query", "", "Query to ask (for single query mode)")
 		//url     = flag.String("url", "", "URL to scrape")
-		//verbose = flag.Bool("verbose", false, "Enable verbose logging")
+		verbose = flag.Bool("verbose", false, "Enable verbose logging")
 		topK    = flag.Int("topk", 5, "Number of results to retrieve")
 		model   = flag.String("model", "llama3.1:8b", "Generation model to use")
 		help    = flag.Bool("help", false, "Show help")
@@ -59,9 +60,12 @@ func main() {
 	}
 
 	// Setup logging
-	// if *verbose {
-	// 	log.SetLevel(log.DebugLevel) // You might need to adjust this based on your logging setup
-	// }
+	if *verbose {
+		logHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})
+		slog.SetDefault(slog.New(logHandler))
+	}
 
 	// Initialize configuration
 	config, err := initConfigs()
@@ -115,7 +119,6 @@ func showHelp() {
 	fmt.Printf("\n%sExamples:%s\n", ColorBold, ColorReset)
 	fmt.Printf("  %s./program --cmd=interactive%s\n", ColorGreen, ColorReset)
 	fmt.Printf("  %s./program --cmd=query --query=\"How do I reset my password?\"%s\n", ColorGreen, ColorReset)
-	fmt.Printf("  %s./program --cmd=pipeline --url=\"https://example.com\"%s\n", ColorGreen, ColorReset)
 }
 
 func runSingleQuery(query string, config Config) {
@@ -203,13 +206,13 @@ func runInteractiveMode(config Config) {
 
 func printInteractiveHelp() {
 	fmt.Printf("%sCommands:%s\n", ColorBold, ColorReset)
-	fmt.Printf("  %s/help%s     - Show this help\n", ColorCyan, ColorReset)
-	fmt.Printf("  %s/stats%s    - Show system statistics\n", ColorCyan, ColorReset)
-	fmt.Printf("  %s/config%s   - Show current configuration\n", ColorCyan, ColorReset)
-	fmt.Printf("  %s/topk <n>%s - Change number of results retrieved\n", ColorCyan, ColorReset)
-	fmt.Printf("  %s/model <m>%s- Change generation model\n", ColorCyan, ColorReset)
-	fmt.Printf("  %s/similar%s  - Show similar chunks without generating answer\n", ColorCyan, ColorReset)
-	fmt.Printf("  %s/quit%s     - Exit the program\n", ColorCyan, ColorReset)
+	fmt.Printf("  %s/help%s      - Show this help\n", ColorCyan, ColorReset)
+	fmt.Printf("  %s/stats%s     - Show system statistics\n", ColorCyan, ColorReset)
+	fmt.Printf("  %s/config%s    - Show current configuration\n", ColorCyan, ColorReset)
+	fmt.Printf("  %s/topk <n>%s  - Change number of results retrieved\n", ColorCyan, ColorReset)
+	fmt.Printf("  %s/model <m>%s - Change generation model\n", ColorCyan, ColorReset)
+	fmt.Printf("  %s/similar%s   - Show similar chunks without generating answer\n", ColorCyan, ColorReset)
+	fmt.Printf("  %s/quit%s      - Exit the program\n", ColorCyan, ColorReset)
 	fmt.Println()
 }
 
@@ -382,12 +385,14 @@ func truncateText(text string, maxLen int) string {
 }
 
 func runScrapeAndIndex(config Config) {
-	fmt.Println("Running scrape and index...")
+	fmt.Printf("%s🚀 Running full pipeline for: %s%s\n", ColorBlue, config.ScraperConfig.DomainPrefix, ColorReset)
 
-	// Scrape content from the website
+	// SCRAPE
+	fmt.Printf("\n%s📥 Step 1: Scraping and indexing website...%s\n", ColorYellow, ColorReset)
+	// Initialize scraper
 	scraper, err := scraper.NewWebScraper(config.ScraperConfig)
 	if err != nil {
-		log.Fatalf("Failed to create scraper: %v", err)
+		log.Fatalf("💥 Failed to create scraper: %v", err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
@@ -397,7 +402,7 @@ func runScrapeAndIndex(config Config) {
 		log.Fatalf("Scraping failed: %v", err)
 	}
 	content := scraper.GetContent()
-	log.Printf("Scraping completed. Found %d unique content items", len(content))
+	fmt.Printf("%s✅ Scraping completed%s. Found %d unique content items", ColorGreen, ColorReset, len(content))
 
 	// Print summary
 	htmlCount := 0
@@ -411,12 +416,10 @@ func runScrapeAndIndex(config Config) {
 		}
 	}
 	
-	log.Printf("Content breakdown: %d HTML pages, %d PDF documents", htmlCount, pdfCount)
-
+	fmt.Printf("Content breakdown: %d HTML pages, %d PDF documents", htmlCount, pdfCount)
 	// Process and chunk the scraped content
 	if err := chunking.ProcessAndSave(config.ChunkingConfig, scraper.GetContent(), config.ScraperConfig.OutDir); err != nil {
-		log.Printf("Failed to process and save chunks: %v", err)
-		return
+		log.Fatalf("%s💥 Failed to process and save chunks:%s %v", ColorRed, ColorReset, err)
 	}
 
 	// Embed the scraped content
@@ -426,8 +429,9 @@ func runScrapeAndIndex(config Config) {
 	//Process chunks to embedding
 	fmt.Printf("%s🔗 Processing chunks to embeddings...%s\n", ColorYellow, ColorReset)
 	if err := embedding.ProcessChunksToEmbeddings(chunksFile, config.OutputDir, ollamaUrl, config.EmbeddingConfig); err != nil {
-		log.Fatalf("Failed to process chunks to embeddings: %v", err)
+		log.Fatalf("💥 Failed to process chunks to embeddings: %v", err)
 	}
+	fmt.Printf("%s✅ Embedding completed!%s\n", ColorGreen, ColorReset)
 
 	// Write output data to qdrant database
 	fmt.Printf("%s📦 Setting up vector database...%s\n", ColorYellow, ColorReset)
@@ -437,6 +441,8 @@ func runScrapeAndIndex(config Config) {
 		log.Fatalf("Failed to setup vector database: %v", err)
 	}
 	defer vdb.Close()
+	fmt.Printf("%s✅ Vector database setup complete!%s\n", ColorGreen, ColorReset)
+	fmt.Printf("%s👍 Scraping and database work is completed! You may now procedd with asking questions.%s", ColorCyan, ColorReset)
 }
 
 func initConfigs() (Config, error) {
