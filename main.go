@@ -81,7 +81,6 @@ func main() {
 	// Execute the requested command
 	switch *command {
 	case "scrape":
-		//runScrapeCommand(*url, config)
 		runScrapeAndIndex(config)
 	case "query":
 		if *query == "" {
@@ -192,17 +191,6 @@ func runInteractiveMode(config Config) {
 	
 	fmt.Printf("\n%s👋 Goodbye!%s\n", ColorGreen, ColorReset)
 }
-
-// func runFullPipeline(config Config) {
-// 	fmt.Printf("%s🚀 Running full pipeline for: %s%s\n", ColorBlue, url, ColorReset)
-	
-// 	// Step 1: Scrape
-// 	fmt.Printf("\n%s📥 Step 1: Scraping website...%s\n", ColorYellow, ColorReset)
-// 	runScrapeAndIndex()
-	
-// 	fmt.Printf("\n%s✅ Pipeline completed! Ready for queries.%s\n", ColorGreen, ColorReset)
-// 	fmt.Println("Run with --cmd=interactive to start chatting")
-// }
 
 func printInteractiveHelp() {
 	fmt.Printf("%sCommands:%s\n", ColorBold, ColorReset)
